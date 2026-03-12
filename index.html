@@ -182,10 +182,10 @@ html, body { height:100%; overflow:hidden; font-family:'Noto Sans KR',sans-serif
     transition:height 0.3s ease;
   }
   .slide-panel.expanded {
-    height:40vh;
+    height:36vh;
   }
   .slide-panel-header { display:none; }
-  .slide-container { padding:8px; overflow:hidden; align-items:flex-start; padding-top:12px; }
+  .slide-container { padding:4px; overflow:hidden; align-items:flex-start; justify-content:flex-start; }
   .script-panel {
     width:100%; min-width:auto; max-width:none; flex:1;
   }
@@ -1055,10 +1055,10 @@ function scalePtEmbed() {
   const sw = 1280, sh = 720;
   let scale;
   if (ch < 50) {
-    // Collapsed: scale based on width only, assume 16:9 ratio fits in 40vh
-    scale = Math.min(cw / sw, (window.innerHeight * 0.38) / sh, 1);
+    scale = Math.min(cw / sw, (window.innerHeight * 0.35) / sh, 1);
   } else {
-    scale = Math.min(cw / sw, ch / sh, 1);
+    // Give extra margin so top isn't clipped
+    scale = Math.min(cw / sw, (ch - 8) / sh, 1);
   }
   embed.style.transform = 'scale(' + scale + ')';
   embed.style.transformOrigin = 'top left';
