@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Doklo 발표 연습 모드 — 독립 파일</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; font-family:'Noto Sans KR',sans-serif; background:#0f172a; color:#e2e8f0; -webkit-tap-highlight-color:transparent; }
+
+/* ===== DESKTOP LAYOUT ===== */
+.practice-layout {
+  display:flex; height:100vh; gap:0;
+}
+
+/* Left: Slide */
+.slide-panel {
+  flex:1; display:flex; flex-direction:column; background:#1e293b;
+  border-right:2px solid #334155;
+}
+.slide-panel-header {
+  padding:10px 20px; background:#1e293b; border-bottom:1px solid #334155;
+  display:flex; align-items:center; gap:12px; flex-shrink:0;
+}
+.slide-panel-header h2 { font-size:14px; font-weight:700; color:#94a3b8; }
+.slide-container {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  padding:16px; overflow:hidden; position:relative; background:#0f172a;
+}
+
+/* Right: Script */
+.script-panel {
+  width:440px; min-width:380px; max-width:500px;
+  display:flex; flex-direction:column; background:#1e293b;
+  overflow:hidden;
+}
+.script-panel-header {
+  padding:10px 20px; background:#1e293b; border-bottom:1px solid #334155;
+  display:flex; align-items:center; gap:12px; flex-shrink:0;
+}
+.script-panel-header h2 { font-size:14px; font-weight:700; color:#94a3b8; }
+.script-scroll {
+  flex:1; overflow-y:auto; padding:16px 20px 100px;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:smooth;
+}
+
+/* Script cards */
+.script-card {
+  margin-bottom:16px; border-radius:12px; overflow:hidden;
+  border:2px solid transparent; transition:all 0.3s;
+  opacity:0.35; transform:scale(0.97);
+}
+.script-card.active {
+  opacity:1; transform:scale(1);
+  border-color:#4f46e5;
+  box-shadow:0 0 20px rgba(79,70,229,0.3);
+}
+.script-card-header {
+  padding:10px 16px; display:flex; align-items:center; gap:10px;
+  font-size:13px; font-weight:700;
+}
+.script-card.s1 .script-card-header { background:#4f46e5; color:#fff; }
+.script-card.s2 .script-card-header { background:#f43f5e; color:#fff; }
+.script-card.s3 .script-card-header { background:#f59e0b; color:#fff; }
+.script-card.s4 .script-card-header { background:#0ea5e9; color:#fff; }
+.script-card.s5 .script-card-header { background:#10b981; color:#fff; }
+.script-card.s6 .script-card-header { background:#8b5cf6; color:#fff; }
+.script-card.s7 .script-card-header { background:#06b6d4; color:#fff; }
+.script-card.s8 .script-card-header { background:#ec4899; color:#fff; }
+.script-card.s9 .script-card-header { background:#1e293b; color:#fff; border-bottom:1px solid #334155; }
+
+.script-card-num {
+  width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.25);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800; flex-shrink:0;
+}
+.script-card-title { flex:1; }
+.script-card-time {
+  margin-left:auto; font-size:12px; font-weight:600;
+  background:rgba(255,255,255,0.2); padding:2px 10px; border-radius:10px;
+  flex-shrink:0;
+}
+
+.script-card-body {
+  padding:14px 16px; background:#0f172a;
+  font-size:14px; line-height:1.85; color:#cbd5e1;
+}
+.script-card-body strong { color:#e2e8f0; }
+.script-card-body .highlight {
+  background:linear-gradient(transparent 60%, rgba(250,204,21,0.3) 60%);
+  font-weight:700; color:#fef08a;
+}
+
+.script-card-tip {
+  padding:8px 16px; background:#1e1b4b; font-size:12px;
+  color:#a78bfa; font-weight:600;
+}
+.script-card-tip::before { content:'💡 '; }
+
+/* ===== BOTTOM BAR ===== */
+.bottom-bar {
+  position:fixed; bottom:0; left:0; right:0;
+  padding:8px 16px; background:rgba(15,23,42,0.97); backdrop-filter:blur(12px);
+  border-top:1px solid #334155;
+  display:flex; align-items:center; gap:12px; z-index:100;
+  -webkit-backdrop-filter:blur(12px);
+}
+.nav-dots { display:flex; gap:6px; align-items:center; }
+.nav-dot {
+  width:12px; height:12px; border-radius:50%; background:#334155;
+  cursor:pointer; border:none; transition:all 0.2s; outline:none;
+}
+.nav-dot.active { background:#4f46e5; transform:scale(1.3); box-shadow:0 0 8px rgba(79,70,229,0.5); }
+.nav-dot:hover { background:#64748b; }
+
+.slide-info {
+  font-size:13px; color:#94a3b8; font-weight:600;
+  display:flex; align-items:center; gap:6px; white-space:nowrap;
+}
+.slide-info .current-name { color:#e2e8f0; font-weight:700; }
+
+.timer-box {
+  margin-left:auto; display:flex; align-items:center; gap:8px; flex-shrink:0;
+}
+.timer-display {
+  font-size:24px; font-weight:800; color:#4f46e5;
+  font-variant-numeric:tabular-nums; letter-spacing:1px;
+  min-width:72px; text-align:center;
+}
+.timer-display.warning { color:#f59e0b; }
+.timer-display.danger { color:#f43f5e; }
+
+.timer-btn {
+  padding:6px 14px; border-radius:8px; border:none; cursor:pointer;
+  font-size:13px; font-weight:700; font-family:inherit; transition:all 0.2s;
+  -webkit-user-select:none; user-select:none;
+}
+.timer-btn.start { background:#4f46e5; color:#fff; }
+.timer-btn.start:hover { background:#4338ca; }
+.timer-btn.pause { background:#f59e0b; color:#fff; }
+.timer-btn.reset { background:#334155; color:#94a3b8; }
+.timer-btn.reset:hover { background:#475569; color:#fff; }
+
+.shortcut-hint {
+  font-size:11px; color:#475569; position:fixed; bottom:52px; right:16px;
+}
+
+/* Scrollbar */
+.script-scroll::-webkit-scrollbar { width:5px; }
+.script-scroll::-webkit-scrollbar-track { background:transparent; }
+.script-scroll::-webkit-scrollbar-thumb { background:#334155; border-radius:3px; }
+
+/* ===== MOBILE: Slide toggle button ===== */
+.slide-toggle-btn {
+  display:none;
+}
+
+/* ===== MOBILE NAV ARROWS ===== */
+.mobile-nav-arrows {
+  display:none;
+}
+.nav-arrow-btn {
+  width:44px; height:44px; border-radius:50%; border:none;
+  background:#334155; color:#e2e8f0; font-size:18px; font-weight:800;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  -webkit-user-select:none; user-select:none;
+  transition:background 0.15s;
+  flex-shrink:0;
+}
+.nav-arrow-btn:active { background:#4f46e5; }
+
+/* ===== MOBILE LAYOUT ===== */
+@media (max-width:1024px) {
+  .practice-layout {
+    flex-direction:column;
+  }
+  .slide-panel {
+    flex:none; height:0; overflow:hidden;
+    border-right:none; border-bottom:2px solid #334155;
+    transition:height 0.3s ease;
+  }
+  .slide-panel.expanded {
+    height:40vh;
+  }
+  .slide-panel-header { display:none; }
+  .slide-container { padding:8px; overflow:hidden; }
+  .script-panel {
+    width:100%; min-width:auto; max-width:none; flex:1;
+  }
+  .script-panel-header { display:none; }
+  .script-scroll {
+    padding:8px 12px 120px;
+  }
+  .slide-toggle-btn {
+    display:flex; align-items:center; justify-content:center;
+    position:fixed; top:12px; right:12px; z-index:200;
+    width:44px; height:44px; border-radius:50%;
+    background:rgba(30,41,59,0.9); border:1.5px solid #475569;
+    color:#94a3b8; font-size:20px; cursor:pointer;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    box-shadow:0 2px 12px rgba(0,0,0,0.3);
+    -webkit-user-select:none; user-select:none;
+    transition:all 0.2s;
+  }
+  .slide-toggle-btn.active {
+    background:rgba(79,70,229,0.9); border-color:#6366f1; color:#fff;
+  }
+  .script-card { border-radius:10px; }
+  .script-card-header { padding:12px 14px; font-size:14px; }
+  .script-card-body { padding:14px; font-size:15px; line-height:1.9; }
+  .script-card-tip { padding:10px 14px; font-size:12px; }
+  .bottom-bar {
+    padding:8px 12px;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .mobile-nav-arrows {
+    display:flex; gap:8px; align-items:center;
+    order:-1;
+  }
+  .nav-dots { display:none; }
+  .slide-info { font-size:14px; flex:1; justify-content:center; }
+  .timer-box { gap:6px; }
+  .timer-display { font-size:22px; min-width:66px; }
+  .timer-btn { padding:8px 12px; font-size:12px; }
+  .shortcut-hint { display:none; }
+}
+
+@media (max-width:400px) {
+  .script-card-body { font-size:14px; padding:12px; }
+  .timer-display { font-size:20px; min-width:60px; }
+  .timer-btn { padding:6px 10px; font-size:11px; }
+  .nav-arrow-btn { width:38px; height:38px; font-size:16px; }
+}
+
+/* ============================================================
+   PT EMBED — Namespaced under .pt-embed to avoid conflicts
+   ============================================================ */
+
+.pt-embed {
+  width:1280px; height:720px;
+  position:relative;
+  font-family:'Noto Sans KR','Inter',sans-serif;
+  /* will be scaled by JS */
+  transform-origin: top left;
+}
+
+/* PT slide wrapper in the container */
+.pt-slide-wrapper {
+  position:relative;
+  overflow:hidden;
+}
+
+/* Color tokens for PT */
+.pt-embed {
+  --bg: #ffffff;
+  --bg-alt: #f8f9fa;
+  --card: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #1a1a2e;
+  --text-sub: #475569;
+  --text-muted: #94a3b8;
+  --indigo: #4f46e5;
+  --indigo-light: #eef2ff;
+  --sky: #0ea5e9;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --rose: #f43f5e;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.pt-embed .pt-slide {
+  position:absolute;
+  width:1280px; height:720px;
+  background:var(--bg);
+  border-radius:4px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.12);
+  padding:48px 44px 36px;
+  opacity:0;
+  pointer-events:none;
+  overflow:hidden;
+  display:flex; flex-direction:column;
+  visibility:hidden;
+  top:0; left:0;
+}
+.pt-embed .pt-slide.active {
+  opacity:1; pointer-events:auto;
+  visibility:visible;
+}
+
+/* Common PT elements */
+.pt-embed .logo { position:absolute; top:16px; left:24px; font-size:15px; font-weight:700; color:var(--indigo); letter-spacing:-0.5px; z-index:10; }
+.pt-embed .slide-num { position:absolute; bottom:14px; right:24px; font-size:13px; color:var(--text-muted); font-weight:500; }
+.pt-embed .label { display:inline-block; font-size:15px; font-weight:700; letter-spacing:0.5px; margin-bottom:6px; color:var(--indigo); }
+.pt-embed .label-red { color:var(--rose); }
+.pt-embed .label-amber { color:var(--amber); }
+.pt-embed .label-green { color:var(--green); }
+.pt-embed .label-sky { color:var(--sky); }
+.pt-embed .slide-title { font-size:38px; font-weight:800; color:var(--text); line-height:1.3; margin-bottom:6px; letter-spacing:-0.5px; }
+.pt-embed .slide-sub { font-size:22px; color:var(--text-sub); font-weight:500; margin-bottom:14px; }
+
+/* Badges */
+.pt-embed .badge { display:inline-block; padding:7px 18px; border-radius:20px; font-size:14px; font-weight:600; }
+.pt-embed .badge-indigo { background:var(--indigo); color:#fff; }
+.pt-embed .badge-sky { background:var(--sky); color:#fff; }
+.pt-embed .badge-green { background:var(--green); color:#fff; }
+.pt-embed .badge-amber { background:var(--amber); color:#fff; }
+.pt-embed .badge-outline { background:transparent; border:1.5px solid var(--indigo); color:var(--indigo); }
+.pt-embed .badge-light { background:var(--indigo-light); color:var(--indigo); }
+
+/* Cards */
+.pt-embed .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow); }
+.pt-embed .card-sm { padding:12px 14px; border-radius:10px; }
+
+/* Slide 1: Cover */
+.pt-embed .cover-center { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.pt-embed .cover-title { font-size:34px; font-weight:800; color:var(--text); line-height:1.35; margin-bottom:12px; letter-spacing:-0.5px; }
+.pt-embed .cover-sub { font-size:18px; color:var(--text-sub); font-weight:500; margin-bottom:28px; }
+.pt-embed .cover-footer { font-size:14px; color:var(--text-muted); font-weight:500; }
+
+/* Slide 2: Problem */
+.pt-embed .stat-cards { display:flex; gap:18px; margin:auto 0; flex:0 0 auto; }
+.pt-embed .stat-card { flex:1; text-align:center; padding:24px 16px 18px; border-radius:14px; background:var(--card); border:1px solid var(--border); }
+.pt-embed .stat-num { font-size:54px; font-weight:800; color:var(--indigo); line-height:1.1; }
+.pt-embed .stat-label { font-size:16px; color:var(--text-sub); margin-top:6px; font-weight:500; }
+.pt-embed .stat-source { font-size:12px; color:var(--text-muted); margin-top:6px; font-style:italic; }
+.pt-embed .metr-card { background:var(--amber-light); border-left:4px solid var(--amber); border-radius:12px; padding:22px 28px; flex-shrink:0; }
+.pt-embed .metr-card .metr-title { font-size:20px; font-weight:700; color:var(--text); margin-bottom:8px; }
+.pt-embed .metr-card .metr-body { font-size:17px; color:var(--text-sub); line-height:1.7; }
+
+/* Slide 3: Comparison table */
+.pt-embed .comp-table { width:100%; border-collapse:collapse; font-size:16px; }
+.pt-embed .comp-table th { background:var(--indigo); color:#fff; padding:14px 16px; text-align:center; font-weight:700; font-size:16px; }
+.pt-embed .comp-table th:first-child { border-radius:8px 0 0 0; }
+.pt-embed .comp-table th:last-child { border-radius:0 8px 0 0; }
+.pt-embed .comp-table td { padding:14px 16px; text-align:center; border-bottom:1px solid var(--border); font-weight:500; color:var(--text-sub); }
+.pt-embed .comp-table tr:last-child td:first-child { border-radius:0 0 0 8px; }
+.pt-embed .comp-table tr:last-child td:last-child { border-radius:0 0 8px 0; }
+.pt-embed .comp-table .doklo-col { background:var(--indigo-light); color:var(--indigo); font-weight:700; }
+.pt-embed .comp-table .doklo-header { background:var(--indigo); color:#fff; }
+
+/* Slide 4: Architecture */
+.pt-embed .arch-flow { display:flex; align-items:center; justify-content:center; gap:0; flex:1; min-height:0; transform:scale(1.2); transform-origin:center center; }
+.pt-embed .arch-col { display:flex; flex-direction:column; justify-content:center; }
+.pt-embed .arch-col-input { width:130px; gap:6px; }
+.pt-embed .arch-input-box { background:var(--card); border:1.5px solid var(--border); border-radius:8px; padding:8px 6px; text-align:center; }
+.pt-embed .arch-input-box .arch-icon { font-size:18px; }
+.pt-embed .arch-input-box .arch-label { font-size:11px; font-weight:700; color:var(--text); margin-top:2px; }
+.pt-embed .arch-input-box .arch-sub { font-size:9px; color:var(--text-muted); }
+.pt-embed .arch-col-arrow { width:44px; align-items:center; justify-content:center; }
+.pt-embed .arch-arrow-line { width:100%; height:2px; background:linear-gradient(90deg,#94a3b8,var(--indigo)); position:relative; }
+.pt-embed .arch-arrow-line::after { content:''; position:absolute; right:-2px; top:-5px; border:6px solid transparent; border-left:8px solid var(--indigo); }
+.pt-embed .arch-arrow-label { font-size:8px; font-weight:600; color:var(--indigo); text-align:center; margin-top:4px; }
+.pt-embed .arch-col-engine { width:180px; }
+.pt-embed .arch-engine-box { background:linear-gradient(135deg,#4f46e5,#6366f1); border-radius:12px; padding:12px; color:#fff; box-shadow:0 4px 16px rgba(79,70,229,0.25); }
+.pt-embed .arch-engine-title { font-size:13px; font-weight:800; text-align:center; margin-bottom:8px; letter-spacing:0.3px; }
+.pt-embed .arch-engine-mod { background:rgba(255,255,255,0.15); border-radius:6px; padding:5px 8px; margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+.pt-embed .arch-engine-mod:last-child { margin-bottom:0; }
+.pt-embed .arch-engine-mod .mod-icon { font-size:12px; }
+.pt-embed .arch-engine-mod .mod-text { font-size:10px; font-weight:600; }
+.pt-embed .arch-engine-mod .mod-desc { font-size:8px; opacity:0.8; }
+.pt-embed .arch-col-bi { width:56px; align-items:center; justify-content:center; gap:4px; }
+.pt-embed .arch-bi-label { font-size:7px; font-weight:700; color:var(--indigo); text-align:center; }
+.pt-embed .arch-bi-label-rev { font-size:7px; font-weight:700; color:#f97316; text-align:center; }
+.pt-embed .arch-bi-fwd { width:100%; height:2px; background:linear-gradient(90deg,#6366f1,#a78bfa); position:relative; }
+.pt-embed .arch-bi-fwd::after { content:''; position:absolute; right:-2px; top:-4px; border:5px solid transparent; border-left:7px solid #a78bfa; }
+.pt-embed .arch-bi-rev { width:100%; height:2px; background:linear-gradient(270deg,#f59e0b,#f97316); position:relative; }
+.pt-embed .arch-bi-rev::before { content:''; position:absolute; left:-2px; top:-4px; border:5px solid transparent; border-right:7px solid #f97316; }
+.pt-embed .arch-col-dok { width:120px; align-items:center; justify-content:center; }
+.pt-embed .arch-dok-circle { width:110px; height:110px; border-radius:50%; background:#fefce8; border:2px solid #f59e0b; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 3px 12px rgba(245,158,11,0.2); }
+.pt-embed .arch-dok-circle .dok-icon { font-size:20px; }
+.pt-embed .arch-dok-circle .dok-title { font-size:13px; font-weight:800; color:#92400e; margin-top:2px; }
+.pt-embed .arch-dok-circle .dok-sub { font-size:8px; color:#a16207; text-align:center; line-height:1.2; margin-top:2px; }
+.pt-embed .arch-col-arrow2 { width:36px; align-items:center; justify-content:center; }
+.pt-embed .arch-arrow2-line { width:100%; height:2px; background:linear-gradient(90deg,#6366f1,#a78bfa); position:relative; }
+.pt-embed .arch-arrow2-line::after { content:''; position:absolute; right:-2px; top:-4px; border:5px solid transparent; border-left:7px solid #a78bfa; }
+.pt-embed .arch-arrow2-label { font-size:7px; font-weight:600; color:#7c3aed; text-align:center; margin-top:3px; }
+.pt-embed .arch-col-spokes { width:140px; gap:5px; }
+.pt-embed .arch-spoke { background:#f0fdf4; border:1.5px solid #86efac; border-radius:7px; padding:5px 8px; display:flex; align-items:center; gap:6px; }
+.pt-embed .arch-spoke .sp-icon { font-size:13px; }
+.pt-embed .arch-spoke .sp-name { font-size:10px; font-weight:700; color:#166534; }
+.pt-embed .bottom-badges { display:flex; gap:12px; justify-content:center; margin-top:auto; }
+.pt-embed .bottom-badge { padding:6px 20px; background:var(--indigo-light); color:var(--indigo); border-radius:8px; font-size:13px; font-weight:700; text-align:center; }
+
+/* Slide 5: Market */
+.pt-embed .mini-bar-group { flex:1; display:flex; flex-direction:column; align-items:center; }
+.pt-embed .mini-bar { width:100%; max-width:36px; border-radius:3px 3px 0 0; min-height:2px; margin:0 auto; }
+.pt-embed .mini-bar.current { background:linear-gradient(180deg,#6366f1,#4f46e5); }
+.pt-embed .mini-bar.forecast { background:linear-gradient(180deg,#a5b4fc,#818cf8); }
+.pt-embed .mini-bar.target { background:linear-gradient(180deg,#6366f1,#4338ca); box-shadow:0 0 6px rgba(99,102,241,0.3); }
+
+/* Slide 6: Competition — reuses comp-table */
+
+/* Slide 7: GTM — inline styles mostly */
+
+/* Slide 8: Team */
+.pt-embed .profile-card { display:flex; align-items:center; gap:16px; padding:14px 20px; background:var(--indigo-light); border:1.5px solid var(--indigo); border-radius:12px; margin-bottom:14px; }
+.pt-embed .profile-avatar { width:48px; height:48px; border-radius:50%; background:var(--indigo); display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; flex-shrink:0; }
+.pt-embed .profile-name { font-size:18px; font-weight:800; color:var(--text); }
+
+/* Slide 9: Closing */
+.pt-embed .closing-center { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.pt-embed .closing-title { font-size:32px; font-weight:800; color:var(--text); margin-bottom:8px; }
+.pt-embed .closing-sub { font-size:16px; color:var(--text-sub); margin-bottom:20px; }
+.pt-embed .goal-row { display:flex; gap:16px; margin-bottom:20px; }
+.pt-embed .goal-card { text-align:center; padding:12px 18px; background:var(--card); border-radius:12px; border:1px solid var(--border); min-width:100px; }
+.pt-embed .goal-num { font-size:24px; font-weight:800; color:var(--indigo); }
+.pt-embed .goal-label { font-size:12px; color:var(--text-sub); font-weight:500; }
+.pt-embed .qr-card { display:flex; align-items:center; gap:20px; padding:16px 24px; background:var(--indigo-light); border:1.5px solid var(--indigo); border-radius:12px; margin-bottom:16px; }
+.pt-embed .qr-placeholder { width:80px; height:80px; background:var(--card); border:2px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text-muted); flex-shrink:0; text-align:center; line-height:1.3; }
+.pt-embed .qr-text { text-align:left; }
+.pt-embed .qr-url { font-size:18px; font-weight:800; color:var(--indigo); }
+.pt-embed .qr-hint { font-size:13px; color:var(--text-sub); margin-top:2px; }
+.pt-embed .closing-logo { font-size:28px; font-weight:800; color:var(--indigo); margin-bottom:2px; }
+.pt-embed .closing-slogan { font-size:14px; color:var(--text-sub); font-weight:600; margin-bottom:4px; }
+.pt-embed .closing-thanks { font-size:20px; font-weight:700; color:var(--text); }
+</style>
+</head>
+<body>
+
+<!-- Mobile: slide toggle button -->
+<button class="slide-toggle-btn" id="slideToggle" onclick="toggleSlidePanel()">📊</button>
+
+<div class="practice-layout">
+  <!-- Slide Panel -->
+  <div class="slide-panel" id="slidePanel">
+    <div class="slide-panel-header"><h2>📊 장표</h2></div>
+    <div class="slide-container">
+      <div class="pt-slide-wrapper" id="ptWrapper">
+        <div class="pt-embed" id="ptEmbed">
+
+          <!-- ===== PT SLIDE 1: COVER ===== -->
+          <div class="pt-slide active" data-slide="1">
+            <span class="logo">Doklo</span>
+            <div class="cover-center">
+              <div style="font-size:72px; font-weight:900; color:var(--indigo); letter-spacing:-2px; margin-bottom:8px;">Doklo</div>
+              <div class="cover-title" style="font-size:30px; margin-bottom:16px;">코드가 바뀔 때마다,<br>모든 문서가 따라갑니다</div>
+              <div style="width:60px; height:3px; background:var(--indigo); border-radius:2px; margin:0 auto 20px;"></div>
+              <div class="cover-sub" style="font-size:16px; margin-bottom:40px;">코드와 비즈니스를 잇는 살아있는 지도</div>
+              <div class="cover-footer" style="font-size:15px;">
+                <strong>주식회사 메이피</strong> · MAYP, Inc.<br>
+                <span style="font-size:13px;">이경욱 대표 &nbsp;|&nbsp; 2026. 03. 12</span>
+              </div>
+            </div>
+            <span class="slide-num">1 / 9</span>
+          </div>
+
+          <!-- ===== PT SLIDE 2: PROBLEM ===== -->
+          <div class="pt-slide" data-slide="2">
+            <span class="logo">Doklo</span>
+            <div class="label label-red">🔴 PROBLEM</div>
+            <div class="slide-title">AI가 만드는 코드, 너무 빠르고 많아서 따라갈 수 없습니다</div>
+            <div class="slide-sub">매번 Claude에 물어볼 건가요?</div>
+            <div class="stat-cards">
+              <div class="stat-card">
+                <div class="stat-num">84%</div>
+                <div class="stat-label">개발자 AI 코딩 도구 사용</div>
+                <div class="stat-source">GitHub Octoverse 2024</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-num">42%</div>
+                <div class="stat-label">코드가 AI에 의해 작성</div>
+                <div class="stat-source">Google CEO Q4 2024</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-num" style="font-size:30px;">300~3,000<span style="font-size:20px;">배</span></div>
+                <div class="stat-label">코드 변경 vs 문서 갱신 격차</div>
+                <div class="stat-source">Stripe Developer Coefficient 2023</div>
+              </div>
+            </div>
+            <div class="metr-card" style="background:rgba(79,70,229,0.05); border-left:4px solid var(--indigo);">
+              <div class="metr-title" style="color:var(--text);">🤖 LLM에 직접 물어보면?</div>
+              <div class="metr-body">대화 끝나면 사라짐 · 물어볼 때마다 다른 답 · 매번 비용 발생 · 코드 변경 추적 불가<br><strong style="color:var(--indigo);">코드 이해는 '한 번의 질문'이 아니라 '지속적인 시스템'이 필요합니다</strong></div>
+            </div>
+            <span class="slide-num">2 / 9</span>
+          </div>
+
+          <!-- ===== PT SLIDE 3: WHY DOKLO ===== -->
+          <div class="pt-slide" data-slide="3">
+            <span class="logo">Doklo</span>
+            <div class="label">💡 WHY DOKLO?</div>
+            <div class="slide-title" style="font-size:26px; margin-bottom:2px;">AI 분석은 누구나 합니다. 우리는 시스템을 만듭니다.</div>
+            <div class="slide-sub" style="margin-bottom:10px;">Claude에 코드 분석을 요청하는 것 vs. Doklo를 쓰는 것</div>
+            <table class="comp-table" style="font-size:18px; margin-top:auto; margin-bottom:auto;">
+              <tr>
+                <th style="font-size:14px;padding:16px 22px;width:18%;background:var(--text);">비교 항목</th>
+                <th style="font-size:14px;padding:16px 22px;width:38%;background:#64748b;">🤖 LLM 직접 사용</th>
+                <th class="doklo-header" style="font-size:14px;padding:16px 22px;width:44%;">📦 Doklo</th>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--text);padding:16px 22px;">결과물</td>
+                <td style="padding:16px 22px;">자연어 텍스트 (사라짐)</td>
+                <td class="doklo-col" style="padding:16px 22px;"><strong>구조화된 Dok JSON (영속)</strong></td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--text);padding:16px 22px;">일관성</td>
+                <td style="padding:16px 22px;">매번 다른 답</td>
+                <td class="doklo-col" style="padding:16px 22px;"><strong>결정론적 (항상 같은 결과)</strong></td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--text);padding:16px 22px;">자동화</td>
+                <td style="padding:16px 22px;">수동 프롬프팅</td>
+                <td class="doklo-col" style="padding:16px 22px;"><strong>CI/CD 연동 자동 갱신</strong></td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--text);padding:16px 22px;">변경 추적</td>
+                <td style="padding:16px 22px;">불가능</td>
+                <td class="doklo-col" style="padding:16px 22px;"><strong>코드 변경 → 비즈니스 영향 감지</strong></td>
+              </tr>
+              <tr>
+                <td style="font-weight:700;color:var(--text);padding:16px 22px;">다중 출력</td>
+                <td style="padding:16px 22px;">6번 각각 프롬프팅</td>
+                <td class="doklo-col" style="padding:16px 22px;"><strong>1개 Dok → 6종 자동 (0.01초)</strong></td>
+              </tr>
+            </table>
+            <div style="display:flex; gap:14px; margin-top:0;">
+              <div style="flex:1; padding:16px 22px; background:var(--indigo-light); border:1.5px solid var(--indigo); border-radius:10px; display:flex; align-items:center;">
+                <div style="font-size:15px; color:var(--indigo); font-weight:600; line-height:1.5;">
+                  🔗 Git이 코드의 <strong>변경 이력</strong>을 추적하듯,<br>Doklo는 코드의 <strong>비즈니스 의미</strong>를 추적합니다.
+                </div>
+              </div>
+              <div style="flex:1; padding:16px 22px; background:var(--amber-light); border:1.5px solid var(--amber); border-radius:10px; display:flex; align-items:center;">
+                <div style="font-size:15px; color:#92400e; font-weight:600; line-height:1.5;">
+                  📦 <strong>Dok</strong> = 코드와 비즈니스 사이의<br>구조화된 중간 레이어 (Single Source of Truth)
+                </div>
+              </div>
+            </div>
+            <span class="slide-num">3 / 9</span>
+          </div>
+
+          <!-- ===== PT SLIDE 4: PRODUCT ===== -->
+          <div class="pt-slide" data-slide="4">
+            <span class="logo">Doklo</span>
+            <div class="label">⚙️ PRODUCT</div>
+            <div class="slide-title" style="font-size:26px; margin-bottom:2px;">코드 → Dok → 모든 것</div>
+            <div class="slide-sub" style="margin-bottom:4px;">한 번 분석하면, 나머지는 자동입니다</div>
+            <div class="arch-flow">
+              <div class="arch-col arch-col-input">
+                <div class="arch-input-box"><div class="arch-icon">💻</div><div class="arch-label">소스코드</div><div class="arch-sub">TypeScript, Next.js</div></div>
+                <div class="arch-input-box"><div class="arch-icon">🤖</div><div class="arch-label">AI 생성 코드</div><div class="arch-sub">Cursor, Copilot</div></div>
+                <div class="arch-input-box"><div class="arch-icon">⚡</div><div class="arch-label">바이브 코딩</div><div class="arch-sub">비개발자 AI 작성</div></div>
+              </div>
+              <div class="arch-col arch-col-arrow">
+                <div class="arch-arrow-line"></div>
+                <div class="arch-arrow-label">CLI 분석<br><code style="font-size:8px;background:rgba(79,70,229,0.1);padding:1px 3px;border-radius:2px;">npx doklo<br>analyze</code></div>
+              </div>
+              <div class="arch-col arch-col-engine">
+                <div class="arch-engine-box">
+                  <div class="arch-engine-title">⚙️ Doklo Engine</div>
+                  <div class="arch-engine-mod"><div class="mod-icon">🔍</div><div><div class="mod-text">Scanner</div><div class="mod-desc">프로젝트 구조 스캔</div></div></div>
+                  <div class="arch-engine-mod"><div class="mod-icon">🌳</div><div><div class="mod-text">Parser (4종)</div><div class="mod-desc">TS · Next.js · Store · 범용</div></div></div>
+                  <div class="arch-engine-mod"><div class="mod-icon">🧠</div><div><div class="mod-text">LLM Generator</div><div class="mod-desc">BYOK · 비즈니스 기능 추출</div></div></div>
+                  <div class="arch-engine-mod"><div class="mod-icon">🔗</div><div><div class="mod-text">Code Anchor</div><div class="mod-desc">코드↔문서 양방향 매핑</div></div></div>
+                </div>
+              </div>
+              <div class="arch-col arch-col-bi">
+                <div class="arch-bi-label">정방향 동기화</div>
+                <div class="arch-bi-fwd"></div>
+                <div style="height:16px;"></div>
+                <div class="arch-bi-rev"></div>
+                <div class="arch-bi-label-rev">역방향 (DCR)</div>
+              </div>
+              <div class="arch-col arch-col-dok">
+                <div class="arch-dok-circle">
+                  <div class="dok-icon">📦</div>
+                  <div class="dok-title">Dok (Hub)</div>
+                  <div class="dok-sub">비즈니스 기능 단위<br>Single Source of Truth</div>
+                </div>
+              </div>
+              <div class="arch-col arch-col-arrow2">
+                <div class="arch-arrow2-line"></div>
+                <div class="arch-arrow2-label">자동 전파</div>
+              </div>
+              <div class="arch-col arch-col-spokes">
+                <div class="arch-spoke"><span class="sp-icon">📋</span><span class="sp-name">프로덕트 원페이저</span></div>
+                <div class="arch-spoke"><span class="sp-icon">🌳</span><span class="sp-name">정보 구조도</span></div>
+                <div class="arch-spoke"><span class="sp-icon">📱</span><span class="sp-name">화면별 기능 맵</span></div>
+                <div class="arch-spoke"><span class="sp-icon">🔀</span><span class="sp-name">사용자 플로우</span></div>
+                <div class="arch-spoke"><span class="sp-icon">📊</span><span class="sp-name">제품 소개 장표</span></div>
+                <div class="arch-spoke"><span class="sp-icon">🎬</span><span class="sp-name">튜토리얼 스토리보드</span></div>
+              </div>
+            </div>
+            <div class="bottom-badges">
+              <div class="bottom-badge">4종 CLI 파서</div>
+              <div class="bottom-badge">7종 스포크 생성기</div>
+              <div class="bottom-badge">187개 테스트 통과</div>
+            </div>
+            <span class="slide-num">4 / 9</span>
+          </div>
+
+          <!-- ===== PT SLIDE 5: MARKET ===== -->
+          <div class="pt-slide" data-slide="5">
+            <span class="logo">Doklo</span>
+            <div class="label">📈 MARKET SIZE & GROWTH</div>
+            <div class="slide-title" style="font-size:28px;">비어있는 $57.9B 시장</div>
+            <div style="display:flex; gap:24px; flex:1; min-height:0; margin-top:8px;">
+              <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+                <div style="position:relative;width:380px;height:380px;">
+                  <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:380px;height:370px;border-radius:50%;background:rgba(79,70,229,0.06);border:2.5px solid rgba(79,70,229,0.25);display:flex;flex-direction:column;align-items:center;padding-top:20px;">
+                    <span style="font-size:14px;font-weight:700;color:var(--indigo);letter-spacing:1px;">TAM</span>
+                    <span style="font-size:28px;font-weight:800;color:var(--indigo);line-height:1;">$57.9B</span>
+                    <span style="font-size:12px;color:var(--text-muted);">(약 8.7조원) AI 코드 어시스턴트 2030</span>
+                  </div>
+                  <div style="position:absolute;top:95px;left:50%;transform:translateX(-50%);width:270px;height:260px;border-radius:50%;background:rgba(14,165,233,0.06);border:2.5px solid rgba(14,165,233,0.3);display:flex;flex-direction:column;align-items:center;padding-top:18px;">
+                    <span style="font-size:14px;font-weight:700;color:var(--sky);letter-spacing:1px;">SAM</span>
+                    <span style="font-size:22px;font-weight:800;color:var(--sky);line-height:1;">$8.14B</span>
+                    <span style="font-size:11px;color:var(--text-muted);">(약 1.2조원) 코드 문서화/이해</span>
+                  </div>
+                  <div style="position:absolute;top:195px;left:50%;transform:translateX(-50%);width:175px;height:165px;border-radius:50%;background:rgba(16,185,129,0.08);border:2.5px solid rgba(16,185,129,0.4);display:flex;flex-direction:column;align-items:center;padding-top:20px;">
+                    <span style="font-size:14px;font-weight:700;color:var(--green);letter-spacing:1px;">SOM</span>
+                    <span style="font-size:20px;font-weight:800;color:var(--green);line-height:1;">$108K</span>
+                    <span style="font-size:11px;color:var(--text-muted);text-align:center;line-height:1.3;">(약 1.6억원)<br>1년차 목표</span>
+                  </div>
+                  <div style="position:absolute;bottom:6px;right:0;">
+                    <span class="badge badge-green" style="font-size:13px;padding:6px 16px;">CAGR 48.1%</span>
+                  </div>
+                </div>
+              </div>
+              <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:10px; text-align:center;">글로벌 AI 코드 어시스턴트 시장 성장</div>
+                <div style="display:flex;align-items:flex-end;gap:14px;height:260px;padding:0 8px;border-bottom:2px solid var(--border);">
+                  <div class="mini-bar-group"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;text-align:center;">$8.1B</div><div class="mini-bar current" style="height:calc(8.1/57.9*220px);width:100%;max-width:56px;"></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-weight:600;"><b>2025</b></div></div>
+                  <div class="mini-bar-group"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;text-align:center;">$12.1B</div><div class="mini-bar forecast" style="height:calc(12.1/57.9*220px);width:100%;max-width:56px;"></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px;">2026</div></div>
+                  <div class="mini-bar-group"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;text-align:center;">$26.4B</div><div class="mini-bar forecast" style="height:calc(26.4/57.9*220px);width:100%;max-width:56px;"></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px;">2028</div></div>
+                  <div class="mini-bar-group"><div style="font-size:13px;font-weight:800;color:var(--indigo);margin-bottom:3px;text-align:center;">$57.9B</div><div class="mini-bar target" style="height:calc(57.9/57.9*220px);width:100%;max-width:56px;"></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-weight:700;"><b>2030</b></div></div>
+                </div>
+                <div style="text-align:center; margin-top:8px;">
+                  <span style="font-size:10px; color:var(--text-muted);">출처: MarketsandMarkets AI Code Assistant Market Report (2024)</span>
+                </div>
+              </div>
+            </div>
+            <span class="slide-num">5 / 9</span>
+          </div>
+
+          <!-- ===== PT SLIDE 6: COMPETITION ===== -->
+          <div class="pt-slide" data-slide="6">
+            <span class="logo">Doklo</span>
+            <div class="label">⚔️ COMPETITION</div>
+            <div class="slide-title" style="font-size:26px;">$111M 투자가 증명하는 시장 — 그리고 빈틈</div>
+            <div style="display:flex; gap:20px; flex:1; min-height:0; margin-top:8px;">
+              <div style="flex:1.2; display:flex; flex-direction:column; justify-content:center;">
+                <table class="comp-table" style="font-size:14px;">
+                  <tr>
+                    <th style="font-size:13px;padding:9px 12px;">구분</th>
+                    <th style="font-size:13px;padding:9px 12px;">Swimm</th>
+                    <th style="font-size:13px;padding:9px 12px;">Mintlify</th>
+                    <th style="font-size:13px;padding:9px 12px;">Entire</th>
+                    <th class="doklo-header" style="font-size:13px;padding:9px 12px;">Doklo ✦</th>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:700;color:var(--text);padding:8px 12px;">투자유치</td>
+                    <td style="padding:8px 12px;">$33.3M<br><span style="font-size:10px;color:var(--text-muted);">(500억)</span></td>
+                    <td style="padding:8px 12px;">$18.5M<br><span style="font-size:10px;color:var(--text-muted);">(278억)</span></td>
+                    <td style="padding:8px 12px;">$60M<br><span style="font-size:10px;color:var(--text-muted);">(900억)</span></td>
+                    <td class="doklo-col" style="padding:8px 12px;">—</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:700;color:var(--text);padding:8px 12px;">접근</td>
+                    <td style="padding:8px 12px;">파일 단위 문서</td>
+                    <td style="padding:8px 12px;">API 문서</td>
+                    <td style="padding:8px 12px;">AI 에이전트 관리</td>
+                    <td class="doklo-col" style="padding:8px 12px;">비즈니스 기능 단위</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:700;color:var(--text);padding:8px 12px;">동기화</td>
+                    <td style="padding:8px 12px;">단방향</td>
+                    <td style="padding:8px 12px;">수동</td>
+                    <td style="padding:8px 12px;">—</td>
+                    <td class="doklo-col" style="padding:8px 12px;">양방향 (DCR)</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:700;color:var(--text);padding:8px 12px;">대상 코드</td>
+                    <td style="padding:8px 12px;">레거시 피벗 🔴</td>
+                    <td style="padding:8px 12px;">엔터프라이즈</td>
+                    <td style="padding:8px 12px;">모든 코드</td>
+                    <td class="doklo-col" style="padding:8px 12px;">모던 코드 ✅</td>
+                  </tr>
+                </table>
+              </div>
+              <div style="flex:0.8; display:flex; flex-direction:column; gap:14px; justify-content:center;">
+                <div style="padding:16px 18px; background:var(--amber-light); border:1.5px solid var(--amber); border-radius:12px;">
+                  <div style="font-size:13px; font-weight:700; color:#92400e; margin-bottom:6px;">🔴 Swimm의 교훈</div>
+                  <div style="font-size:14px; color:var(--text-sub); line-height:1.6;">
+                    Swimm은 <strong style="color:var(--amber);">$33.3M</strong> 투자 후 레거시 코드로 피벗.<br>
+                    시장이 없어서가 아니라, <strong>접근법이 틀렸기 때문.</strong>
+                  </div>
+                </div>
+                <div style="padding:16px 18px; background:var(--indigo-light); border:1.5px solid var(--indigo); border-radius:12px;">
+                  <div style="font-size:13px; font-weight:700; color:var(--indigo); margin-bottom:6px;">🔵 Entire의 신호</div>
+                  <div style="font-size:14px; color:var(--text-sub); line-height:1.6;">
+                    前 GitHub CEO가 <strong style="color:var(--indigo);">$60M</strong>으로 Entire를 창업 — AI가 만드는 코드를 관리하는 시대가 온 것.<br>
+                    <strong>Doklo는 그 코드를 이해시킵니다.</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <span class="slide-num">6 / 9</span>
+          </div>
+
+          <!-- ===== PT SLIDE 7: GTM ===== -->
+          <div class="pt-slide" data-slide="7">
+            <span class="logo">Doklo</span>
+            <div class="label">🚀 GO-TO-MARKET</div>
+            <div class="slide-title">오픈소스로 깔고, SaaS로 번다</div>
+            <div style="display:flex; gap:0; align-items:stretch; justify-content:center; margin:auto 0; max-height:320px;">
+              <div style="flex:1; padding:14px 14px; background:var(--indigo-light); border:1.5px solid var(--indigo); border-radius:14px 0 0 14px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+                <div style="font-size:24px; margin-bottom:4px;">🌍</div>
+                <div style="font-size:14px; font-weight:700; color:var(--indigo); margin-bottom:4px;">오픈소스 CLI 배포</div>
+                <div style="font-size:11px; color:var(--text-sub); line-height:1.5;">GitHub 공개 + npm 배포<br>BYOK (자체 API 키)<br><strong>무료로 진입장벽 제거</strong></div>
+                <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">4~5월</div>
+              </div>
+              <div style="display:flex; align-items:center; font-size:22px; color:var(--text-muted); padding:0 3px;">→</div>
+              <div style="flex:1; padding:14px 14px; background:#ecfdf5; border:1.5px solid var(--green); border-radius:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+                <div style="font-size:24px; margin-bottom:4px;">🚀</div>
+                <div style="font-size:14px; font-weight:700; color:var(--green); margin-bottom:4px;">Product Hunt 런칭</div>
+                <div style="font-size:11px; color:var(--text-sub); line-height:1.5;">런칭 데이 캠페인<br>DevRel 콘텐츠 (블로그, 영상)<br><strong>⭐ 1,000 Stars 목표</strong></div>
+                <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">5~6월</div>
+              </div>
+              <div style="display:flex; align-items:center; font-size:22px; color:var(--text-muted); padding:0 3px;">→</div>
+              <div style="flex:1; padding:14px 14px; background:#f0f9ff; border:1.5px solid var(--sky); border-radius:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+                <div style="font-size:24px; margin-bottom:4px;">👥</div>
+                <div style="font-size:14px; font-weight:700; color:var(--sky); margin-bottom:4px;">Beta 50팀 확보</div>
+                <div style="font-size:11px; color:var(--text-sub); line-height:1.5;">클라우드 대시보드 출시<br>피드백 반영 + 기능 고도화<br><strong>유료 전환 테스트</strong></div>
+                <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">7~9월</div>
+              </div>
+              <div style="display:flex; align-items:center; font-size:22px; color:var(--text-muted); padding:0 3px;">→</div>
+              <div style="flex:1; padding:14px 14px; background:var(--indigo); border-radius:0 14px 14px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+                <div style="font-size:24px; margin-bottom:4px;">💳</div>
+                <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">유료 30팀 전환</div>
+                <div style="font-size:11px; color:rgba(255,255,255,0.8); line-height:1.5;">MRR $570 달성<br>팀 플랜 + DCR 기능<br><strong style="color:#fff;">영문 버전 + 해외 확장</strong></div>
+                <div style="font-size:10px; color:rgba(255,255,255,0.6); margin-top:6px;">10~12월</div>
+              </div>
+            </div>
+            <div style="text-align:center; font-size:12px; color:var(--text-muted); margin-top:auto;">
+              💡 프라이싱: Free (오픈소스 CLI) → Pro/Team (클라우드 SaaS) · 상세 가격은 어펜딕스 참고
+            </div>
+            <span class="slide-num">7 / 9</span>
+          </div>
+
+          <!-- ===== PT SLIDE 8: TEAM ===== -->
+          <div class="pt-slide" data-slide="8">
+            <span class="logo">Doklo</span>
+            <div class="label">👤 TEAM</div>
+            <div class="slide-title" style="font-size:26px;">1인 개발로 여기까지. 팀을 만들어 더 멀리.</div>
+            <div style="display:flex; gap:20px; flex:1; min-height:0; margin-top:8px;">
+              <div style="flex:0.45; display:flex; flex-direction:column; gap:10px;">
+                <div class="profile-card" style="margin:0;">
+                  <div class="profile-avatar" style="font-size:36px;">👨‍💻</div>
+                  <div>
+                    <div class="profile-name">이경욱 · 대표이사</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">고려대학교 전기전자전파공학부</div>
+                  </div>
+                </div>
+                <div style="padding:14px; background:var(--indigo-light); border:1.5px solid var(--indigo); border-radius:12px;">
+                  <div style="font-size:13px; font-weight:700; color:var(--indigo); margin-bottom:8px;">💼 핵심 경력</div>
+                  <div style="font-size:12px; color:var(--text-sub); line-height:1.7;">
+                    <strong>2023~현재</strong> 풀스택 & AI 솔루션 프리랜서<br>
+                    <span style="color:var(--text-muted);">LLM 기반 서비스 아키텍처 설계·개발</span><br><br>
+                    <strong>2022</strong> (주)더브이플래닛 프론트엔드 파트장<br>
+                    <span style="color:var(--text-muted);">V-PLATE V2 전면 개편, V-AD 개발</span>
+                  </div>
+                </div>
+                <div style="padding:14px; background:#ecfdf5; border:1.5px solid var(--green); border-radius:12px; flex:1;">
+                  <div style="font-size:13px; font-weight:700; color:var(--green); margin-bottom:6px;">🚀 창업 경험 — (주)잘노는 '놀담'</div>
+                  <div style="font-size:12px; color:var(--text-sub); line-height:1.7;">
+                    <strong>공동창업자 & CTO</strong> (2015~2021, 6년)<br>
+                    놀이시터 매칭 플랫폼 — 기획·개발·운영 총괄<br>
+                    <strong style="color:var(--green);">💰 프리시리즈A 17억원 투자 유치</strong><br>
+                    <span style="color:var(--text-muted);">서비스 기획부터 런칭, 투자유치, 팀 빌딩까지<br>전 과정을 경험한 창업 CTO</span>
+                  </div>
+                </div>
+              </div>
+              <div style="flex:0.55; display:flex; flex-direction:column; gap:10px;">
+                <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:2px;">🛠️ 주요 납품/개발 이력</div>
+                <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                  <div style="display:flex; gap:8px; padding:7px 10px; background:var(--card); border-radius:6px; border:1px solid var(--border); align-items:center;">
+                    <span style="font-size:10px; font-weight:700; color:var(--indigo); min-width:36px;">2025</span>
+                    <span style="font-size:11px; color:var(--text-sub);">(주)임팩트스퀘어 <strong>'임팩톨로지AI'</strong> — AI 웹 서비스</span>
+                  </div>
+                  <div style="display:flex; gap:8px; padding:7px 10px; background:var(--card); border-radius:6px; border:1px solid var(--border); align-items:center;">
+                    <span style="font-size:10px; font-weight:700; color:var(--indigo); min-width:36px;">2024</span>
+                    <span style="font-size:11px; color:var(--text-sub);">(주)임팩트스퀘어 <strong>'AGMS'</strong> — 웹 개발</span>
+                  </div>
+                  <div style="display:flex; gap:8px; padding:7px 10px; background:var(--card); border-radius:6px; border:1px solid var(--border); align-items:center;">
+                    <span style="font-size:10px; font-weight:700; color:var(--indigo); min-width:36px;">2023</span>
+                    <span style="font-size:11px; color:var(--text-sub);">(주)임팩트스퀘어 <strong>'임팩트서클'</strong> — 웹·앱</span>
+                  </div>
+                  <div style="display:flex; gap:8px; padding:7px 10px; background:var(--card); border-radius:6px; border:1px solid var(--border); align-items:center;">
+                    <span style="font-size:10px; font-weight:700; color:var(--sky); min-width:36px;">2022</span>
+                    <span style="font-size:11px; color:var(--text-sub);">(주)더브이플래닛 <strong>'V-AD' / 'V-Plate'</strong> — 웹 서비스</span>
+                  </div>
+                  <div style="display:flex; gap:8px; padding:7px 10px; background:var(--card); border-radius:6px; border:1px solid var(--border); align-items:center;">
+                    <span style="font-size:10px; font-weight:700; color:var(--sky); min-width:36px;">2021</span>
+                    <span style="font-size:11px; color:var(--text-sub);">(주)SK브로드밴드 <strong>'B tv 우리동네광고'</strong></span>
+                  </div>
+                  <div style="display:flex; gap:8px; padding:7px 10px; background:var(--card); border-radius:6px; border:1px solid var(--border); align-items:center;">
+                    <span style="font-size:10px; font-weight:700; color:var(--green); min-width:36px;">2015</span>
+                    <span style="font-size:11px; color:var(--text-sub);">(주)잘노는 <strong>'놀담'</strong> — 공동창업 CTO (6년 운영)</span>
+                  </div>
+                </div>
+                <div style="padding:10px 14px; background:var(--card); border:1.5px solid var(--border); border-radius:10px;">
+                  <div style="font-size:12px; font-weight:700; color:var(--text); margin-bottom:4px;">💰 사업비 & 채용 → 어펜딕스 J 참고</div>
+                  <div style="font-size:11px; color:var(--text-muted);">사업비 1억원 (정부 70% + 자부담 30%) · 선정 즉시 DevRel + 풀스택 채용</div>
+                </div>
+              </div>
+            </div>
+            <span class="slide-num">8 / 9</span>
+          </div>
+
+          <!-- ===== PT SLIDE 9: CLOSING ===== -->
+          <div class="pt-slide" data-slide="9">
+            <span class="logo">Doklo</span>
+            <div class="closing-center">
+              <div class="closing-title">Git이 코드를 추적하듯, Doklo는 코드의 의미를 추적합니다</div>
+              <div class="closing-sub">만드는 것만큼 이해하는 것도 빨라지는 세상.</div>
+              <div class="goal-row" style="gap:28px; justify-content:center;">
+                <div class="goal-card" style="min-width:160px; padding:18px 32px;"><div class="goal-num" style="font-size:36px;">2.5억</div><div class="goal-label" style="font-size:14px;">매출 목표</div></div>
+                <div class="goal-card" style="min-width:160px; padding:18px 32px;"><div class="goal-num" style="font-size:36px;">1K ⭐</div><div class="goal-label" style="font-size:14px;">GitHub Stars</div></div>
+              </div>
+              <div class="qr-card">
+                <div class="qr-placeholder">QR<br>doklo.io<br>/demo</div>
+                <div class="qr-text">
+                  <div style="font-size:13px; color:var(--text-sub); margin-bottom:4px;">📱 직접 체험해보실 수 있습니다</div>
+                  <div class="qr-url">doklo.io/demo</div>
+                  <div class="qr-hint">기회 되실 때 한번 해보세요 😊</div>
+                </div>
+              </div>
+              <div class="closing-logo">Doklo</div>
+              <div class="closing-slogan">Code In, Clarity Out.</div>
+              <div class="closing-thanks">감사합니다 🙏</div>
+            </div>
+            <span class="slide-num">9 / 9</span>
+          </div>
+
+        </div><!-- /pt-embed -->
+      </div><!-- /pt-slide-wrapper -->
+    </div><!-- /slide-container -->
+  </div><!-- /slide-panel -->
+
+  <!-- Script Panel -->
+  <div class="script-panel">
+    <div class="script-panel-header"><h2>🎤 대본</h2></div>
+    <div class="script-scroll" id="scriptScroll">
+
+      <!-- Card 1 -->
+      <div class="script-card s1" data-slide="1">
+        <div class="script-card-header">
+          <div class="script-card-num">1</div>
+          <div class="script-card-title">커버</div>
+          <div class="script-card-time">0:20</div>
+        </div>
+        <div class="script-card-body">
+          안녕하세요. 주식회사 메이피 대표 이경욱입니다.<br><br>
+          <strong class="highlight">코드가 바뀔 때마다, 모든 문서가 따라가는</strong>, 도클로 서비스 소개하겠습니다.
+        </div>
+        <div class="script-card-tip">간결하게. 원라이너 하나로 Doklo가 뭔지 각인시키고 바로 넘어간다.</div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="script-card s2" data-slide="2">
+        <div class="script-card-header">
+          <div class="script-card-num">2</div>
+          <div class="script-card-title">🔴 문제</div>
+          <div class="script-card-time">1:55</div>
+        </div>
+        <div class="script-card-body">
+          지금 개발 현장에서는 무슨 일이 벌어지고 있을까요?<br><br>
+          개발자 <strong>84%</strong>가 AI 코딩 도구를 씁니다. Google CEO가 밝힌 바로는 코드의 <strong>42%</strong>가 이미 AI가 작성하고 있습니다 — 이것도 이미 1년 반 전 얘기입니다.<br><br>
+          지금 AI가 하루에 만들어내는 코드가 <strong>10억 줄</strong>이 넘습니다. 리눅스 운영체제 전체가 약 2,800만 줄인데요. <strong class="highlight">AI가 하루에 리눅스 35개 분량의 코드를 만들어내는 겁니다.</strong><br><br>
+          그러면 우리가 이 코드들, 새로 생성된 프로젝트들을 이해할 수 있을까요?<br><br>
+          코드를 이해할 수 있냐는 물음이 아닙니다. 이 프로젝트가 <strong>어떤 기능을 제공하는지, 사용자가 어떻게 써야 하는지, 비즈니스 규칙은 뭔지.</strong> 그걸 파악할 수 있느냐는 겁니다.<br><br>
+          프롬프트 한 줄이면 앱과 웹이 만들어지는 세상입니다. AI가 스스로 판단해서 수십 초 만에 프로젝트를 만들어냅니다. 그런데 우리는 — 그걸 직접 실행시켜보고 나서야 이 프로젝트가 뭘 하는 건지 알게 됩니다. <strong class="highlight">AI의 속도가 인간의 이해 속도를 이미 까마득하게 넘어선 겁니다.</strong><br><br>
+          결국 누군가는 이 프로젝트를 문서로 정리해야 합니다. 저같은 외주 개발자는 클라이언트에게 산출물을 납품해야 하고, 조직 내 개발팀은 기획자, 디자이너와 문서를 기반으로 일합니다. 코드만 있으면 되는 세상이 아닙니다.<br><br>
+          그런데 AI가 코드를 바꾸는 속도를, 사람이 문서로 따라가는 건 물리적으로 불가능합니다. 코드는 하루에도 수십 번 바뀌는데, 문서는 아무도 안 고칩니다. <strong class="highlight">안 고치는 게 아니라 못 고치는 거죠.</strong><br><br>
+          그래서 Doklo를 만들었습니다.
+        </div>
+        <div class="script-card-tip">84%, 42%로 시작 → 10억 줄/리눅스 35개로 스케일 체감 → "기능과 사용법" 전환 → 문서화 필요성 → "못 고치는 거죠"로 닫기.</div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="script-card s3" data-slide="3">
+        <div class="script-card-header">
+          <div class="script-card-num">3</div>
+          <div class="script-card-title">💡 Why Doklo ★</div>
+          <div class="script-card-time">1:35</div>
+        </div>
+        <div class="script-card-body">
+          그래서 Doklo를 만들었습니다. <strong>이 테이블이 핵심입니다.</strong><br><br>
+          LLM에 직접 물어보면 — 결과가 텍스트로 나오고, 대화 끝나면 사라집니다. 매번 다른 답을 주고, 일일이 수동으로 물어봐야 합니다. 코드가 바뀌어도 모릅니다.<br><br>
+          Doklo는 다릅니다. <strong class="highlight">코드를 분석해서 "Dok"이라는 구조화된 데이터로 저장합니다.</strong> Dok은 단순 텍스트가 아니라 <strong>비즈니스 로직이 구조화된 JSON</strong>입니다. 기능 단위, 비즈니스 규칙까지 전부 담겨 있습니다.<br><br>
+          이 구조화된 데이터가 있기 때문에 — 프로덕트 원페이저, 기능 명세서, 사용자 플로우 같은 <strong>6종 문서가 0.01초 만에 자동 생성</strong>됩니다. Dok 하나가 바뀌면 연결된 모든 문서가 따라갑니다. 개발자가 코드를 커밋하면, PM이 보는 기획서가 자동으로 업데이트되는 겁니다.<br><br>
+          기존 도구들은 파일 단위로 주석을 다는 수준입니다. Doklo는 <strong>"이 함수가 비즈니스에서 무슨 역할을 하는지"</strong>를 이해합니다. 관점이 다릅니다.<br><br>
+          한마디로, <strong class="highlight">Git이 코드의 변경 이력을 추적하듯, Doklo는 코드의 비즈니스 의미를 추적합니다.</strong>
+        </div>
+        <div class="script-card-tip">테이블을 손가락으로 짚으며 설명. "커밋 → PM 기획서 자동 업데이트" 시나리오로 체감. Git 비유로 마무리.</div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="script-card s4" data-slide="4">
+        <div class="script-card-header">
+          <div class="script-card-num">4</div>
+          <div class="script-card-title">⚙️ 제품 아키텍처</div>
+          <div class="script-card-time">1:10</div>
+        </div>
+        <div class="script-card-body">
+          동작 과정을 보시겠습니다.<br><br>
+          도클로는 요즘 유명한 오픈소스들과 마찬가지로 CLI로 제공이 됩니다. 프로젝트 폴더에서 <strong>"npx doklo init"</strong>이라고 입력만 하면 Doklo가 프로젝트 내 코드를 자동으로 읽어서 — <strong>어떤 기능이 있는지, 각 기능이 어떻게 연결되는지</strong> 분석합니다.<br><br>
+          그 결과를 AI가 <strong>비즈니스 기능 단위로 정리</strong>해서, 가운데 있는 <strong>"Dok"</strong>이라는 구조화된 데이터로 만듭니다. 이게 중심 허브입니다.<br><br>
+          그리고 이 Dok 하나에서 — 제품 소개서, 기능 명세서, 사용자 플로우, 사용자 매뉴얼 같은 <strong class="highlight">문서들이 자동으로 생성</strong>됩니다. 허브가 바뀌면, 연결된 모든 문서가 자동으로 따라갑니다.<br><br>
+          실제로 프로젝트에 적용해서 결과를 확인한 상태입니다. 이론이 아니라 <strong>이미 동작하는 제품</strong>입니다.
+        </div>
+        <div class="script-card-tip">다이어그램 왼쪽→가운데→오른쪽 순서로 가리키며 설명. "npx doklo init"으로 실제 제품 느낌. "이미 동작한다"로 마무리.</div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="script-card s5" data-slide="5">
+        <div class="script-card-header">
+          <div class="script-card-num">5</div>
+          <div class="script-card-title">📈 시장</div>
+          <div class="script-card-time">1:10</div>
+        </div>
+        <div class="script-card-body">
+          시장을 보겠습니다.<br><br>
+          AI 코드 어시스턴트 시장이 2025년 8.1조에서 2030년 57.9조까지, <strong>연평균 48% 성장</strong>합니다. AI가 코드를 더 많이 만들수록, 그 코드를 이해하는 도구의 수요도 같이 올라갑니다. 구조적으로 같이 갈 수밖에 없는 시장입니다.<br><br>
+          그중 코드 문서화/이해 영역이 <strong>SAM 8.14조</strong>입니다.<br><br>
+          타겟 고객은 명확합니다. <strong>개발자 5~50명 규모의 SaaS 팀</strong>, 그리고 <strong>실제 서비스 런칭을 준비하는 1인 바이브코더</strong>입니다. 이 두 그룹이 코드 이해와 문서화 문제를 가장 심하게 겪으면서, 의사결정이 빠릅니다.<br><br>
+          중요한 건 — <strong class="highlight">이 시장에서 "모던 코드 + 비즈니스 기능 단위"로 접근하는 플레이어가 없다는 겁니다.</strong>
+        </div>
+        <div class="script-card-tip">동심원을 가리키며 TAM→SAM 순서로. 타겟 두 그룹(SaaS팀 + 바이브코더) 짚기. "비어있다" 강조. SOM은 장표에 보이니 굳이 읽지 않는다.</div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="script-card s6" data-slide="6">
+        <div class="script-card-header">
+          <div class="script-card-num">6</div>
+          <div class="script-card-title">⚔️ 경쟁</div>
+          <div class="script-card-time">1:05</div>
+        </div>
+        <div class="script-card-body">
+          경쟁사를 보면 오히려 저희 기회가 보입니다.<br><br>
+          이 영역에 이미 <strong>1,670억원</strong>이 투자됐습니다. Swimm 500억, Mintlify 278억, 그리고 올해 2월 — 前 GitHub CEO가 퇴사해서 만든 Entire에 900억. 시장이 검증됐다는 뜻입니다.<br><br>
+          그런데 Swimm은 500억 투자 받고도 <strong class="highlight">레거시 코드로 피벗</strong>했습니다. 접근이 틀렸기 때문입니다. 파일 단위로 문서를 붙이는 건 — 코드가 바뀌면 문서가 깨집니다. 확장이 안 됩니다.<br><br>
+          Mintlify는 API 문서 자동화 도구입니다. 비즈니스 로직은 건드리지 않습니다. Entire는 AI 에이전트를 관리하는 도구이지, 코드를 비즈니스 관점에서 이해시키는 도구가 아닙니다.<br><br>
+          <strong>Doklo만이 "비즈니스 기능 단위"로 코드를 분석하고, 코드가 바뀌면 문서가 자동으로 따라갑니다.</strong> 이게 저희의 moat입니다.
+        </div>
+        <div class="script-card-tip">"1,670억"으로 시장 검증. 각 경쟁사별 한계를 짚고, "moat" 선언으로 마무리.</div>
+      </div>
+
+      <!-- Card 7 -->
+      <div class="script-card s7" data-slide="7">
+        <div class="script-card-header">
+          <div class="script-card-num">7</div>
+          <div class="script-card-title">🚀 Go-to-Market</div>
+          <div class="script-card-time">1:00</div>
+        </div>
+        <div class="script-card-body">
+          전략은 심플합니다.<br><br>
+          <strong>4월, 오픈소스 CLI를 GitHub에 공개</strong>합니다. 무료로 진입장벽을 없앱니다. 개발자들이 자기 코드에 직접 돌려보게 합니다.<br><br>
+          5~6월 Product Hunt 런칭으로 Stars 1,000개를 확보하고, 7~9월 클라우드 대시보드로 Beta 50팀, 10~12월에 유료 30팀 전환 — MRR 570달러를 목표로 합니다.<br><br>
+          왜 오픈소스냐? Supabase, Vercel 다 이 모델로 성공했습니다. 심지어 Mintlify도 오픈소스로 시작했죠. <strong>개발자 도구는 먼저 써봐야 삽니다.</strong> CLI로 가치를 체험시키고, 팀 기능을 쓰려면 클라우드로 오게 만듭니다.<br><br>
+          <strong>오픈소스로 깔고, 클라우드로 버는 오픈코어 모델입니다.</strong> 가격 정책은 어펜딕스에 준비해뒀습니다.
+        </div>
+        <div class="script-card-tip">4단계를 왼쪽→오른쪽 따라가며. 오픈소스 근거(Supabase/Vercel)로 전략 신뢰도 확보.</div>
+      </div>
+
+      <!-- Card 8 -->
+      <div class="script-card s8" data-slide="8">
+        <div class="script-card-header">
+          <div class="script-card-num">8</div>
+          <div class="script-card-title">👤 팀</div>
+          <div class="script-card-time">1:00</div>
+        </div>
+        <div class="script-card-body">
+          지금까지 혼자 만들었습니다.<br><br>
+          저는 2015년에 놀이시터 매칭 플랫폼 "놀담"을 공동창업해서 <strong class="highlight">6년간 CTO로 기획, 개발, 운영 전체를 총괄</strong>했습니다. <strong>프리시리즈A 17억원 투자 유치</strong> 경험이 있습니다. 0에서 시작해서 제품을 만들고, 투자를 받고, 팀을 키워본 경험이 있습니다.<br><br>
+          이후 프리랜서로 SK브로드밴드, 임팩트스퀘어 등에 풀스택 프로덕트와 AI 솔루션을 납품해왔습니다. <strong class="highlight">Doklo는 갑자기 나온 아이디어가 아니라, 제가 매일 하던 일에서 나온 제품입니다.</strong><br><br>
+          이번 사업에 선정된다면 <strong>DevRel과 풀스택 개발자를 채용</strong>할 계획입니다. AI를 활용할 줄 아는 소수 정예로, 빠르게 움직이는 팀을 꾸리겠습니다. 사업비 상세는 어펜딕스에 있습니다.
+        </div>
+        <div class="script-card-tip">"놀담 6년 CTO + 17억 투자유치"가 핵심 크리덴셜. 도메인 적합성 강조. 채용 계획으로 마무리.</div>
+      </div>
+
+      <!-- Card 9 -->
+      <div class="script-card s9" data-slide="9">
+        <div class="script-card-header">
+          <div class="script-card-num">9</div>
+          <div class="script-card-title">🔚 클로징</div>
+          <div class="script-card-time">0:45</div>
+        </div>
+        <div class="script-card-body">
+          정리하겠습니다.<br><br>
+          AI가 코드를 만드는 속도는 폭발적으로 빨라지고 있습니다. 하지만 그 코드를 이해하는 도구는 아직 없습니다. Doklo가 그 빈자리를 채웁니다.<br><br>
+          <strong class="highlight">Git이 코드를 추적하듯, Doklo는 코드의 의미를 추적합니다.</strong><br><br>
+          1년 뒤 목표 — 매출 2.5억, GitHub Stars 1,000개.<br><br>
+          QR 코드를 찍으시면 데모를 직접 체험하실 수 있습니다.<br><br>
+          감사합니다.
+        </div>
+        <div class="script-card-tip">"빈자리"로 기회 요약 → 원라이너로 마무리. 마지막 문장은 천천히.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Bar -->
+<div class="bottom-bar">
+  <div class="mobile-nav-arrows">
+    <button class="nav-arrow-btn" onclick="goToSlide(currentSlide-1)">‹</button>
+    <button class="nav-arrow-btn" onclick="goToSlide(currentSlide+1)">›</button>
+  </div>
+  <div class="nav-dots" id="navDots"></div>
+  <div class="slide-info">
+    <span id="slideCounter">1/9</span>
+    <span>·</span>
+    <span class="current-name" id="slideName">커버</span>
+  </div>
+  <div class="timer-box">
+    <div class="timer-display" id="timerDisplay">00:00</div>
+    <button class="timer-btn start" id="timerToggle" onclick="toggleTimer()">▶</button>
+    <button class="timer-btn reset" onclick="resetTimer()">↺</button>
+  </div>
+</div>
+
+<div class="shortcut-hint">← → 이동 · Space 타이머 · R 리셋</div>
+
+<script>
+const TOTAL_SLIDES = 9;
+const SLIDE_NAMES = ['커버','🔴 문제','💡 Why Doklo','⚙️ 제품','📈 시장','⚔️ 경쟁','🚀 GTM','👤 팀','🔚 클로징'];
+let currentSlide = 1;
+let timerInterval = null;
+let timerSeconds = 0;
+let timerRunning = false;
+
+// Init dots (desktop)
+const dotsEl = document.getElementById('navDots');
+for (let i = 1; i <= TOTAL_SLIDES; i++) {
+  const dot = document.createElement('button');
+  dot.className = 'nav-dot' + (i === 1 ? ' active' : '');
+  dot.dataset.slide = i;
+  dot.onclick = () => goToSlide(i);
+  dotsEl.appendChild(dot);
+}
+
+// Scale the PT embed to fit its container
+function scalePtEmbed() {
+  const container = document.querySelector('.slide-container');
+  const embed = document.getElementById('ptEmbed');
+  if (!container || !embed) return;
+  const cw = container.clientWidth - 16;
+  const ch = container.clientHeight - 16;
+  // On mobile, panel might be collapsed (height=0) — use width-based scale
+  const sw = 1280, sh = 720;
+  let scale;
+  if (ch < 50) {
+    // Collapsed: scale based on width only, assume 16:9 ratio fits in 40vh
+    scale = Math.min(cw / sw, (window.innerHeight * 0.38) / sh, 1);
+  } else {
+    scale = Math.min(cw / sw, ch / sh, 1);
+  }
+  embed.style.transform = 'scale(' + scale + ')';
+  embed.style.transformOrigin = 'top left';
+  const scaledW = sw * scale;
+  const scaledH = sh * scale;
+  const wrapper = document.getElementById('ptWrapper');
+  wrapper.style.width = scaledW + 'px';
+  wrapper.style.height = scaledH + 'px';
+  wrapper.style.margin = '0 auto';
+}
+
+function goToSlide(n) {
+  if (n < 1 || n > TOTAL_SLIDES) return;
+  currentSlide = n;
+
+  // Sync embedded PT slides
+  document.querySelectorAll('.pt-embed .pt-slide').forEach(function(s) {
+    var si = parseInt(s.getAttribute('data-slide'));
+    if (si === n) {
+      s.classList.add('active');
+    } else {
+      s.classList.remove('active');
+    }
+  });
+
+  // Update dots
+  document.querySelectorAll('.nav-dot').forEach(function(d, i) {
+    d.classList.toggle('active', i + 1 === n);
+  });
+
+  // Update info
+  document.getElementById('slideCounter').textContent = n + '/' + TOTAL_SLIDES;
+  document.getElementById('slideName').textContent = SLIDE_NAMES[n - 1];
+
+  // Update script cards
+  document.querySelectorAll('.script-card').forEach(function(card, i) {
+    card.classList.toggle('active', i + 1 === n);
+  });
+
+  // Scroll to active card
+  var activeCard = document.querySelector('.script-card.active');
+  if (activeCard) {
+    activeCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Slide panel toggle (mobile)
+function toggleSlidePanel() {
+  var panel = document.getElementById('slidePanel');
+  var btn = document.getElementById('slideToggle');
+  panel.classList.toggle('expanded');
+  btn.classList.toggle('active');
+  // Re-scale after animation
+  setTimeout(scalePtEmbed, 350);
+}
+
+// Timer
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timerToggle').textContent = '▶';
+    document.getElementById('timerToggle').className = 'timer-btn start';
+  } else {
+    timerRunning = true;
+    document.getElementById('timerToggle').textContent = '⏸';
+    document.getElementById('timerToggle').className = 'timer-btn pause';
+    timerInterval = setInterval(function() {
+      timerSeconds++;
+      updateTimerDisplay();
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSeconds = 0;
+  updateTimerDisplay();
+  document.getElementById('timerToggle').textContent = '▶';
+  document.getElementById('timerToggle').className = 'timer-btn start';
+}
+
+function updateTimerDisplay() {
+  var m = Math.floor(timerSeconds / 60);
+  var s = timerSeconds % 60;
+  var display = document.getElementById('timerDisplay');
+  display.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  display.className = 'timer-display';
+  if (timerSeconds >= 600) display.classList.add('danger');
+  else if (timerSeconds >= 540) display.classList.add('warning');
+}
+
+// Keyboard (desktop)
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  switch (e.key) {
+    case 'ArrowRight': case 'ArrowDown':
+      e.preventDefault(); goToSlide(currentSlide + 1); break;
+    case 'ArrowLeft': case 'ArrowUp':
+      e.preventDefault(); goToSlide(currentSlide - 1); break;
+    case ' ':
+      e.preventDefault(); toggleTimer(); break;
+    case 'r': case 'R':
+      resetTimer(); break;
+  }
+});
+
+// Swipe support (mobile)
+var touchStartX = 0;
+var touchStartY = 0;
+document.addEventListener('touchstart', function(e) {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+
+document.addEventListener('touchend', function(e) {
+  var dx = e.changedTouches[0].screenX - touchStartX;
+  var dy = e.changedTouches[0].screenY - touchStartY;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    if (dx < 0) goToSlide(currentSlide + 1);
+    else goToSlide(currentSlide - 1);
+  }
+}, { passive: true });
+
+// Tap on script card to navigate
+document.querySelectorAll('.script-card').forEach(function(card, i) {
+  card.addEventListener('click', function() {
+    if (!card.classList.contains('active')) {
+      goToSlide(i + 1);
+    }
+  });
+});
+
+// Scale on resize
+window.addEventListener('resize', scalePtEmbed);
+
+// Init
+goToSlide(1);
+setTimeout(scalePtEmbed, 100);
+</script>
+</body>
+</html>
